@@ -3,11 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="./logo.svg" />
-    <title>Bun + React</title>
+    <title>(t,i,r,a)=>"tixy's parody"</title>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./entry.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
+    <script>
+      for (const key of Object.getOwnPropertyNames(Math)) {
+        const value = Math[key]
+        if (typeof value === 'function') {
+          window[key] = value.bind(Math)
+        } else {
+          window[key] = value
+        }
+      }
+    </script>
   </body>
 </html>

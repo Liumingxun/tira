@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
-    "tira"
+    "tira",
+    "tixy's"
   ],
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,

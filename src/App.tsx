@@ -14,20 +14,23 @@ export function App() {
   )
 
   // eslint-disable-next-line no-new-func
-  const tiraFn = new Function('t,i,r,a', `return Math.sin(t + i) * Math.cos(r / 60 * 2 * Math.PI + a)`)
+  const tiraFn = new Function('t,i,r,a', `return sin(t) * cos(t * r / 60 * 2 * PI + a)`)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const t = new Date().getSeconds()
+    let rafId: number
+    const loop = (t: number) => {
+      t /= 1000
       setPoints(prev =>
         prev.map((p, i) => ({
           ...p,
           mag: Math.min(Math.max(tiraFn(t, i, p.r, p.a), -1), 1),
         })),
       )
-    }, 1000)
+      rafId = requestAnimationFrame(loop)
+    }
+    rafId = requestAnimationFrame(loop)
     return () => {
-      clearInterval(interval)
+      cancelAnimationFrame(rafId)
     }
   }, [])
 

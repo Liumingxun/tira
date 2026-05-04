@@ -19,7 +19,7 @@ export const Polar: FunctionComponent<PolarProps> = ({ points, debug = false }) 
         points.map((point, index) => (
           <div
             key={index}
-            className="absolute transform top-1/2 left-1/2 w-2.5 h-2.5"
+            className="absolute top-1/2 left-1/2 w-2.5 h-2.5"
             style={{
               transformOrigin: `calc(50% - ${point.r}px) calc(50%)`,
               transform: `translate(-50%, -50%) translateX(${point.r}px) rotate(${point.a}rad)`,
