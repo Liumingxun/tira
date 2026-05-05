@@ -1,1 +1,8 @@
 @import 'tailwindcss';
+
+@layer base {
+    textarea {
+        outline: none;
+        resize: none;
+    }
+}

@@ -8,7 +8,7 @@ interface PolarProps {
 
 export const Polar: FunctionComponent<PolarProps> = ({ points, debug = false }) => {
   return (
-    <div className="relative h-full aspect-square bg-amber-200 mx-auto">
+    <div className="relative h-full aspect-square mx-auto">
       {debug && (
         <>
           <div className="absolute inset-0 m-auto w-1 h-full bg-gray-400" />
@@ -26,7 +26,7 @@ export const Polar: FunctionComponent<PolarProps> = ({ points, debug = false }) 
             }}
           >
             <div
-              className="w-full h-full bg-blue-500"
+              className={`w-full h-full ${point.mag >= 0 ? 'bg-blue-500' : 'bg-black'}`}
               style={{
                 transform: `scale(${point.mag})`,
               }}
