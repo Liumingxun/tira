@@ -56,18 +56,42 @@ function parseTiraFn(code: string): TiraFn | null {
 const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 60 * 2 * PI + a)`
 
 const TiraFnInput: FunctionComponent<{ onTiraFnChange: (fn: () => TiraFn) => void }> = ({ onTiraFnChange }) => {
+  const [tiraFnString, setTiraFnString] = useState(DEFAULT_TIRA_FN)
   const handleTiraFnChange = (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
     const fn = parseTiraFn(ev.target.value)
+    setTiraFnString(ev.target.value)
     if (fn) {
-      console.log(fn.toString())
       onTiraFnChange(() => fn)
     }
   }
 
+  const handleKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault()
+      const fn = parseTiraFn(ev.currentTarget.value)
+      if (fn) {
+        setTiraFnString(ev.currentTarget.value)
+        window.location.search = new URLSearchParams({ code: ev.currentTarget.value }).toString()
+      }
+    }
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      const fn = parseTiraFn(code)
+      if (fn) {
+        setTiraFnString(code)
+        onTiraFnChange(() => fn)
+      }
+    }
+  }, [])
+
   return (
     <div className="text-left flex flex-col items-start">
       <label htmlFor="tiraFn">(t,i,r,a) =&gt;</label>
-      <textarea id="tiraFn" cols={35} defaultValue={DEFAULT_TIRA_FN} onChange={handleTiraFnChange} />
+      <textarea id="tiraFn" cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
     </div>
   )
 }
