@@ -53,7 +53,7 @@ function parseTiraFn(code: string): TiraFn | null {
     return null
   }
 }
-const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 60 * 2 * PI + a)`
+const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 6 * 2 * PI + a)`
 
 const TiraFnInput: FunctionComponent<{ onTiraFnChange: (fn: () => TiraFn) => void }> = ({ onTiraFnChange }) => {
   const [tiraFnString, setTiraFnString] = useState(DEFAULT_TIRA_FN)
@@ -117,7 +117,7 @@ export const Tira: FunctionComponent<{
       setPoints(prev =>
         prev.map((p, i) => ({
           ...p,
-          mag: Math.tanh(tiraFn(t, i, p.r, p.a)),
+          mag: Math.min(Math.max(tiraFn(t, i, p.r/10, p.a), -1), 1),
         })),
       )
       rafId = requestAnimationFrame(loop)

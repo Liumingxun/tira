@@ -1,7 +1,7 @@
 const BASE_R = 60
 const BASE_COUNT = 24
 
- interface PolarPoint {
+interface PolarPoint {
   r: number
   a: number
 }
