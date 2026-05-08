@@ -1,18 +1,14 @@
-/**
- * This file is the entry point for the React app, it sets up the root
- * element and renders the App component to the DOM.
- *
- * It is included in `src/index.html`.
- */
-
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App } from './App'
+import { Tira } from './Tira'
+import './index.css'
 
 const el = document.getElementById('root')!
 const app = (
   <StrictMode>
-    <App />
+    <div className="h-screen w-screen overflow-hidden grid grid-rows-2 place-items-center gap-4">
+      <Tira />
+    </div>
   </StrictMode>
 );
 

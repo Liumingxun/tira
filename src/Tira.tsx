@@ -1,16 +1,18 @@
 import type { FunctionComponent } from 'react'
 import type { TiraPoint } from './lib/polar'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { ringPoints } from './lib/polar'
+import type { Example } from './examples'
 
 interface PolarProps {
   points: TiraPoint[]
+  onClick?: () => void
   debug?: boolean
 }
 
-const Polar: FunctionComponent<PolarProps> = ({ points, debug = false }) => {
+const Polar: FunctionComponent<PolarProps> = ({ points, debug = false, onClick }) => {
   return (
-    <div className="relative h-full aspect-square rounded-full mx-auto grid grid-cols-1 grid-rows-1 place-items-center">
+    <div onClick={onClick} className="relative h-full aspect-square rounded-full mx-auto grid grid-cols-1 grid-rows-1 place-items-center">
       {debug && (
         <>
           <div className="absolute inset-0 m-auto w-1 h-full bg-gray-400" />
@@ -55,8 +57,16 @@ function parseTiraFn(code: string): TiraFn | null {
 }
 const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 6 * 2 * PI + a)`
 
-const TiraFnInput: FunctionComponent<{ onTiraFnChange: (fn: () => TiraFn) => void }> = ({ onTiraFnChange }) => {
+const TiraFnInput: FunctionComponent<{ example?: Example, onTiraFnChange: (fn: () => TiraFn) => void }> = memo(({ example, onTiraFnChange }) => {
   const [tiraFnString, setTiraFnString] = useState(DEFAULT_TIRA_FN)
+
+  useEffect(() => {
+    if (example === undefined) return
+    const fn = parseTiraFn(example.tiraFn)
+    setTiraFnString(example.tiraFn)
+    if (fn) onTiraFnChange(() => fn)
+  }, [example])
+
   const handleTiraFnChange = (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
     const fn = parseTiraFn(ev.target.value)
     setTiraFnString(ev.target.value)
@@ -89,12 +99,13 @@ const TiraFnInput: FunctionComponent<{ onTiraFnChange: (fn: () => TiraFn) => voi
   }, [])
 
   return (
-    <div className="text-left flex flex-col items-start">
+    <div className="text-left flex flex-col items-start w-80">
+      {example?.notes.map((note, i) => <p key={i} className="text-blue-500">// {note}</p>)}
       <label htmlFor="tiraFn">(t,i,r,a) =&gt;</label>
-      <textarea id="tiraFn" cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
+      <textarea id="tiraFn" className='overflow-y-visible w-full' cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
     </div>
   )
-}
+})
 
 const RING_COUNT = 12
 const RING_STEP = 10
@@ -103,12 +114,20 @@ export const Tira: FunctionComponent<{
   ringCount?: number
   ringStep?: number
 }> = ({ ringCount = RING_COUNT, ringStep = RING_STEP }) => {
-  const [tiraFn, setTiraFn] = useState(() => parseTiraFn(DEFAULT_TIRA_FN)!)
 
+  const [examples, setExamples] = useState<readonly Example[]>(() => [])
+  const [exampleIndex, setExampleIndex] = useState(0)
+  const [tiraFn, setTiraFn] = useState(() => parseTiraFn(DEFAULT_TIRA_FN)!)
   const [points, setPoints] = useState<TiraPoint[]>(() =>
     Array.from({ length: ringCount }, (_, i) => i)
       .flatMap(i => ringPoints(i * ringStep).map(p => ({ ...p, mag: 1 }))),
   )
+
+  useEffect(() => {
+    import('./examples').then(module => {
+      setExamples(module.default)
+    })
+  }, [])
 
   useEffect(() => {
     let rafId: number
@@ -117,7 +136,7 @@ export const Tira: FunctionComponent<{
       setPoints(prev =>
         prev.map((p, i) => ({
           ...p,
-          mag: Math.min(Math.max(tiraFn(t, i, p.r/10, p.a), -1), 1),
+          mag: Math.min(Math.max(tiraFn(t, i, p.r / 10, p.a), -1), 1),
         })),
       )
       rafId = requestAnimationFrame(loop)
@@ -128,10 +147,16 @@ export const Tira: FunctionComponent<{
     }
   }, [tiraFn])
 
+  const handlePolarClick = () => {
+    if (examples.length === 0) return
+    const next = (exampleIndex + 1) % examples.length
+    setExampleIndex(next)
+  }
+
   return (
     <>
-      <Polar points={points} />
-      <TiraFnInput onTiraFnChange={setTiraFn}></TiraFnInput>
+      <Polar points={points} onClick={handlePolarClick} />
+      <TiraFnInput onTiraFnChange={setTiraFn} example={examples?.[exampleIndex]}></TiraFnInput>
     </>
   )
 }

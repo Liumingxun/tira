@@ -1,9 +1,9 @@
-interface Example {
+export interface Example {
     notes: string[]
     tiraFn: string
 }
 
-export const EXAMPLES: Example[] = [
+const EXAMPLES: readonly Example[] = [
     {
         notes: [
             'tira - creative code golfing',
@@ -37,12 +37,12 @@ export const EXAMPLES: Example[] = [
             "parameter `i` is the index of the square",
             "from 0 to 264"
         ],
-        tiraFn: '+(i==0||i==264)||0.2'
+        tiraFn: 'i==0||i==264||-.2'
     },
     {
         notes: [
-            "parameter `r` is the radial distance of the square",
-            "from 0 to 11"
+            "parameter `r` is the radial distance",
+            "of the square, from 0 to 11"
         ],
         tiraFn: 'r % 3'
     },
@@ -93,4 +93,6 @@ export const EXAMPLES: Example[] = [
         ],
         tiraFn: 'r*cos(a-PI/2)<=5&&r*cos(a-PI/2-2*PI/3)<=5&&r*cos(a-PI/2+2*PI/3)<=5'
     }
-]
+] as const
+
+export default EXAMPLES
