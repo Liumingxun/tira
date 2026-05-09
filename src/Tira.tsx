@@ -1,16 +1,45 @@
 import type { FunctionComponent } from 'react'
 import type { Case } from './examples'
-import type { TiraPoint } from './lib/polar'
-import { memo, useEffect, useState } from 'react'
-import { ringPoints } from './lib/polar'
+import type { PolarPoint } from './lib/polar'
+import { memo, useCallback, useEffect, useImperativeHandle, useReducer, useRef, useState } from 'react'
+import EXAMPLES from './examples'
+import { createPoints } from './lib/polar'
 
 interface PolarProps {
-  points: TiraPoint[]
+  points: PolarPoint[]
+  tiraFn: TiraFn
   onClick?: () => void
   debug?: boolean
 }
 
-const Polar: FunctionComponent<PolarProps> = ({ points, debug = false, onClick }) => {
+const Polar: FunctionComponent<PolarProps> = memo(({ points, tiraFn, debug = false, onClick }) => {
+  const pointElementsRef = useRef<Array<HTMLDivElement | null>>([])
+
+  useEffect(() => {
+    pointElementsRef.current.length = points.length
+  }, [points.length])
+
+  useEffect(() => {
+    let rafId = 0
+    const loop = (time: number) => {
+      const t = time / 1000
+      points.forEach((point, index) => {
+        const element = pointElementsRef.current[index]
+        if (element === null || element === undefined)
+          return
+        const mag = Math.min(Math.max(tiraFn(t, index, point.r / 10, point.a), -1), 1)
+        element.style.transform = `scale(${mag})`
+        element.style.backgroundColor = mag >= 0 ? 'var(--color-blue-500)' : '#000000'
+      })
+      rafId = requestAnimationFrame(loop)
+    }
+
+    rafId = requestAnimationFrame(loop)
+    return () => {
+      cancelAnimationFrame(rafId)
+    }
+  }, [points, tiraFn])
+
   return (
     <div onClick={onClick} className="relative h-full aspect-square rounded-full mx-auto grid grid-cols-1 grid-rows-1 place-items-center">
       {debug && (
@@ -20,7 +49,7 @@ const Polar: FunctionComponent<PolarProps> = ({ points, debug = false, onClick }
         </>
       )}
       {
-        points.map((point) => (
+        points.map((point, index) => (
           <div
             key={`${point.a}-${point.r}`}
             className="w-2.5 h-2.5 border border-transparent"
@@ -31,17 +60,17 @@ const Polar: FunctionComponent<PolarProps> = ({ points, debug = false, onClick }
             }}
           >
             <div
-              className={`w-full h-full ${point.mag >= 0 ? 'bg-blue-500' : 'bg-black'}`}
-              style={{
-                transform: `scale(${point.mag})`,
+              ref={(element) => {
+                pointElementsRef.current[index] = element
               }}
+              className="w-full h-full will-change-transform"
             />
           </div>
         ))
       }
     </div>
   )
-}
+})
 
 type TiraFn = ((t: number, i: number, r: number, a: number) => number)
 function parseTiraFn(code: string): TiraFn | null {
@@ -55,115 +84,95 @@ function parseTiraFn(code: string): TiraFn | null {
     return null
   }
 }
-const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 6 * 2 * PI + a)`
 
-const TiraFnInput: FunctionComponent<{ case?: Case, onTiraFnChange: (fn: () => TiraFn) => void }> = memo(({ case: example, onTiraFnChange }) => {
-  const [tiraFnString, setTiraFnString] = useState(DEFAULT_TIRA_FN)
+interface TiraFnInputState {
+  raw: string
+  fn: TiraFn | null
+}
+
+function createTiraFnInputState(raw: string): TiraFnInputState {
+  return {
+    raw,
+    fn: parseTiraFn(raw),
+  }
+}
+
+function tiraFnInputReducer(_state: TiraFnInputState, raw: string): TiraFnInputState {
+  return createTiraFnInputState(raw)
+}
+
+interface TiraFnInputProps { ref?: React.Ref<TiraFnInputHandle>, onTiraFnChange: (fn: () => TiraFn) => void }
+interface TiraFnInputHandle {
+  next: () => void
+}
+const TiraFnInput: FunctionComponent<TiraFnInputProps> = memo(({ onTiraFnChange, ref }) => {
+  const [state, setState] = useReducer(tiraFnInputReducer, EXAMPLES[0].tiraFn, createTiraFnInputState)
+  const [exampleIndex, setExampleIndex] = useState(0)
+
+  useImperativeHandle(ref, () => ({
+    next: () => {
+      setExampleIndex((index) => {
+        const nextIndex = (index + 1) % EXAMPLES.length
+        setState(EXAMPLES[nextIndex]!.tiraFn)
+        return nextIndex
+      })
+    },
+  }))
 
   useEffect(() => {
-    if (example === undefined)
+    if (state.fn === null)
       return
-    const fn = parseTiraFn(example.tiraFn)
-    setTiraFnString(example.tiraFn)
-    if (fn)
-      onTiraFnChange(() => fn)
-  }, [example])
+    const fn = state.fn
+    onTiraFnChange(() => fn)
+  }, [onTiraFnChange, state.fn])
 
   const handleTiraFnChange = (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const fn = parseTiraFn(ev.target.value)
-    setTiraFnString(ev.target.value)
-    if (fn) {
-      onTiraFnChange(() => fn)
-    }
+    setState(ev.target.value)
   }
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (ev.key === 'Enter') {
       ev.preventDefault()
-      const fn = parseTiraFn(ev.currentTarget.value)
-      if (fn) {
-        setTiraFnString(ev.currentTarget.value)
-        window.location.search = new URLSearchParams({ code: ev.currentTarget.value }).toString()
-      }
+      if (state.fn)
+        history.pushState(null, '', `?${new URLSearchParams({ code: state.raw }).toString()}`)
     }
   }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const code = params.get('code')
-    if (code) {
-      const fn = parseTiraFn(code)
-      if (fn) {
-        setTiraFnString(code)
-        onTiraFnChange(() => fn)
-      }
-    }
+    if (code)
+      setState(code)
   }, [])
 
   return (
     <div className="text-left flex flex-col items-start w-80">
-      {example?.notes.map(note => (
+      {EXAMPLES[exampleIndex]?.notes.map(note => (
         <p key={note} className="text-blue-500">
           &#47;&#47;&ensp;
           {note}
         </p>
       ))}
       <label htmlFor="tiraFn">(t,i,r,a) =&gt;</label>
-      <textarea id="tiraFn" className="overflow-y-visible w-full" cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
+      <textarea id="tiraFn" className="overflow-y-visible w-full" value={state.raw} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
     </div>
   )
 })
 
-const RING_COUNT = 12
-const RING_STEP = 10
+const POINTS = createPoints()
 
-export const Tira: FunctionComponent<{
-  ringCount?: number
-  ringStep?: number
-}> = ({ ringCount = RING_COUNT, ringStep = RING_STEP }) => {
-  const [examples, setExamples] = useState<readonly Case[]>(() => [])
-  const [exampleIndex, setExampleIndex] = useState(0)
-  const [tiraFn, setTiraFn] = useState(() => parseTiraFn(DEFAULT_TIRA_FN)!)
-  const [points, setPoints] = useState<TiraPoint[]>(() =>
-    Array.from({ length: ringCount }, (_, i) => i)
-      .flatMap(i => ringPoints(i * ringStep).map(p => ({ ...p, mag: 1 }))),
-  )
+export const Tira: FunctionComponent = () => {
+  const [tiraFn, setTiraFn] = useState(() => parseTiraFn(EXAMPLES[0]!.tiraFn)!)
+  const tiraFnInputRef = useRef<TiraFnInputHandle>(null)
 
-  useEffect(() => {
-    import('./examples').then((module) => {
-      setExamples(module.default)
-    })
+  const handlePolarClick = useCallback(() => {
+    tiraFnInputRef.current?.next()
   }, [])
-
-  useEffect(() => {
-    let rafId: number
-    const loop = (t: number) => {
-      t /= 1000
-      setPoints(prev =>
-        prev.map((p, i) => ({
-          ...p,
-          mag: Math.min(Math.max(tiraFn(t, i, p.r / 10, p.a), -1), 1),
-        })),
-      )
-      rafId = requestAnimationFrame(loop)
-    }
-    rafId = requestAnimationFrame(loop)
-    return () => {
-      cancelAnimationFrame(rafId)
-    }
-  }, [tiraFn])
-
-  const handlePolarClick = () => {
-    if (examples.length === 0)
-      return
-    const next = (exampleIndex + 1) % examples.length
-    setExampleIndex(next)
-  }
 
   return (
     <>
-      <Polar points={points} onClick={handlePolarClick} />
-      <TiraFnInput onTiraFnChange={setTiraFn} case={examples?.[exampleIndex]}></TiraFnInput>
+      <Polar points={POINTS} tiraFn={tiraFn} onClick={handlePolarClick} />
+      <TiraFnInput ref={tiraFnInputRef} onTiraFnChange={setTiraFn} />
     </>
   )
 }

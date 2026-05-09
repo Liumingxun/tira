@@ -3,7 +3,7 @@ export interface Case {
   tiraFn: string
 }
 
-const EXAMPLES: readonly Case[] = [
+const EXAMPLES = [
   {
     notes: [
       'tira - creative code golfing',
@@ -93,6 +93,6 @@ const EXAMPLES: readonly Case[] = [
     ],
     tiraFn: 'r*cos(a-PI/2)<=5&&r*cos(a-PI/2-2*PI/3)<=5&&r*cos(a-PI/2+2*PI/3)<=5',
   },
-] as const
+] as const satisfies readonly Case[]
 
 export default EXAMPLES

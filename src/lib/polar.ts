@@ -1,13 +1,9 @@
 const BASE_R = 60
 const BASE_COUNT = 24
 
-interface PolarPoint {
+export interface PolarPoint {
   r: number
   a: number
-}
-
-export interface TiraPoint extends PolarPoint {
-  mag: number
 }
 
 export function ringPoints(r: number): PolarPoint[] {
@@ -18,14 +14,10 @@ export function ringPoints(r: number): PolarPoint[] {
   }))
 }
 
-interface CartesianPoint {
-  x: number
-  y: number
-}
+const RING_COUNT = 12
+const RING_STEP = 10
 
-export function point2Cartesian(point: PolarPoint): CartesianPoint {
-  return {
-    x: point.r * Math.cos(point.a),
-    y: point.r * Math.sin(point.a),
-  }
+export function createPoints(ringCount: number = RING_COUNT, ringStep: number = RING_STEP): PolarPoint[] {
+  return Array.from({ length: ringCount }, (_, i) => i)
+    .flatMap(i => ringPoints(i * ringStep))
 }
