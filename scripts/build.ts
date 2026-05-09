@@ -14,7 +14,7 @@ const result = await Bun.build({
   plugins: [tailwind],
   minify: true,
   target: 'browser',
-  sourcemap: 'linked',
+  sourcemap: false,
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
   },

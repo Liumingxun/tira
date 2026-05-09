@@ -1,5 +1,4 @@
 import type { FunctionComponent } from 'react'
-import type { Case } from './examples'
 import type { PolarPoint } from './lib/polar'
 import { memo, useCallback, useEffect, useImperativeHandle, useReducer, useRef, useState } from 'react'
 import EXAMPLES from './examples'
@@ -145,16 +144,39 @@ const TiraFnInput: FunctionComponent<TiraFnInputProps> = memo(({ onTiraFnChange,
       setState(code)
   }, [])
 
+  const [focusing, setFocusing] = useState(() => false)
+
   return (
-    <div className="text-left flex flex-col items-start w-80">
-      {EXAMPLES[exampleIndex]?.notes.map(note => (
-        <p key={note} className="text-blue-500">
-          &#47;&#47;&ensp;
-          {note}
-        </p>
-      ))}
+    <div className="text-left flex flex-col items-start w-96">
+      {
+        focusing
+          ? (
+              <>
+                <p className="text-blue-500">
+                  &#47;&#47;&ensp;
+                  hit "enter" to save in URL
+                </p>
+                <p className="text-blue-500">
+                  &#47;&#47;&ensp;
+                  or click to
+                  {' '}
+                  <a className="underline" href={`https://github.com/liumingxun/tira/issues/new?title=The+Pattern+Name&body=${encodeURIComponent(state.raw)}`} onMouseDown={e => e.preventDefault()}>submit</a>
+                  {' '}
+                  your entry!
+                </p>
+              </>
+            )
+          : (
+              EXAMPLES[exampleIndex]?.notes.map(note => (
+                <p key={note} className="text-blue-500">
+                  &#47;&#47;&ensp;
+                  {note}
+                </p>
+              ),
+              ))
+      }
       <label htmlFor="tiraFn">(t,i,r,a) =&gt;</label>
-      <textarea id="tiraFn" className="overflow-y-visible w-full" value={state.raw} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
+      <textarea id="tiraFn" className="overflow-y-visible w-full" rows={3} value={state.raw} onBlur={() => setFocusing(false)} onFocus={() => setFocusing(true)} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
     </div>
   )
 })

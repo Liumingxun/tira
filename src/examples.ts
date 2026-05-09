@@ -84,14 +84,23 @@ const EXAMPLES = [
   {
     notes: [
       'more examples',
+      'try to figure out more tiraFns',
     ],
     tiraFn: 'cos(r-t)*cos(a*4+t)',
   },
   {
     notes: [
-      'a triangular shape',
+      'triangle, maybe it could be better',
+      'by DeepSeek',
     ],
-    tiraFn: 'r*cos(a-PI/2)<=5&&r*cos(a-PI/2-2*PI/3)<=5&&r*cos(a-PI/2+2*PI/3)<=5',
+    tiraFn: 'r*sin(a)<=5&&abs(r*cos(a))*1.7<=r*sin(a)+11',
+  },
+  {
+    notes: [
+      'starburst, such a perfect!',
+      'by ChatGPT',
+    ],
+    tiraFn: 'r*cos(acos(cos(8*a))/3)<5',
   },
 ] as const satisfies readonly Case[]
 
