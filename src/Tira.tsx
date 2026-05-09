@@ -1,8 +1,8 @@
 import type { FunctionComponent } from 'react'
+import type { Case } from './examples'
 import type { TiraPoint } from './lib/polar'
 import { memo, useEffect, useState } from 'react'
 import { ringPoints } from './lib/polar'
-import type { Example } from './examples'
 
 interface PolarProps {
   points: TiraPoint[]
@@ -20,9 +20,9 @@ const Polar: FunctionComponent<PolarProps> = ({ points, debug = false, onClick }
         </>
       )}
       {
-        points.map((point, index) => (
+        points.map((point) => (
           <div
-            key={index}
+            key={`${point.a}-${point.r}`}
             className="w-2.5 h-2.5 border border-transparent"
             style={{
               gridArea: '1 / 1',
@@ -57,14 +57,16 @@ function parseTiraFn(code: string): TiraFn | null {
 }
 const DEFAULT_TIRA_FN = `sin(t) * cos(t * r / 6 * 2 * PI + a)`
 
-const TiraFnInput: FunctionComponent<{ example?: Example, onTiraFnChange: (fn: () => TiraFn) => void }> = memo(({ example, onTiraFnChange }) => {
+const TiraFnInput: FunctionComponent<{ case?: Case, onTiraFnChange: (fn: () => TiraFn) => void }> = memo(({ case: example, onTiraFnChange }) => {
   const [tiraFnString, setTiraFnString] = useState(DEFAULT_TIRA_FN)
 
   useEffect(() => {
-    if (example === undefined) return
+    if (example === undefined)
+      return
     const fn = parseTiraFn(example.tiraFn)
     setTiraFnString(example.tiraFn)
-    if (fn) onTiraFnChange(() => fn)
+    if (fn)
+      onTiraFnChange(() => fn)
   }, [example])
 
   const handleTiraFnChange = (ev: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -100,9 +102,14 @@ const TiraFnInput: FunctionComponent<{ example?: Example, onTiraFnChange: (fn: (
 
   return (
     <div className="text-left flex flex-col items-start w-80">
-      {example?.notes.map((note, i) => <p key={i} className="text-blue-500">// {note}</p>)}
+      {example?.notes.map(note => (
+        <p key={note} className="text-blue-500">
+          &#47;&#47;&ensp;
+          {note}
+        </p>
+      ))}
       <label htmlFor="tiraFn">(t,i,r,a) =&gt;</label>
-      <textarea id="tiraFn" className='overflow-y-visible w-full' cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
+      <textarea id="tiraFn" className="overflow-y-visible w-full" cols={35} value={tiraFnString} onKeyDown={handleKeyDown} onChange={handleTiraFnChange} />
     </div>
   )
 })
@@ -114,8 +121,7 @@ export const Tira: FunctionComponent<{
   ringCount?: number
   ringStep?: number
 }> = ({ ringCount = RING_COUNT, ringStep = RING_STEP }) => {
-
-  const [examples, setExamples] = useState<readonly Example[]>(() => [])
+  const [examples, setExamples] = useState<readonly Case[]>(() => [])
   const [exampleIndex, setExampleIndex] = useState(0)
   const [tiraFn, setTiraFn] = useState(() => parseTiraFn(DEFAULT_TIRA_FN)!)
   const [points, setPoints] = useState<TiraPoint[]>(() =>
@@ -124,7 +130,7 @@ export const Tira: FunctionComponent<{
   )
 
   useEffect(() => {
-    import('./examples').then(module => {
+    import('./examples').then((module) => {
       setExamples(module.default)
     })
   }, [])
@@ -148,7 +154,8 @@ export const Tira: FunctionComponent<{
   }, [tiraFn])
 
   const handlePolarClick = () => {
-    if (examples.length === 0) return
+    if (examples.length === 0)
+      return
     const next = (exampleIndex + 1) % examples.length
     setExampleIndex(next)
   }
@@ -156,7 +163,7 @@ export const Tira: FunctionComponent<{
   return (
     <>
       <Polar points={points} onClick={handlePolarClick} />
-      <TiraFnInput onTiraFnChange={setTiraFn} example={examples?.[exampleIndex]}></TiraFnInput>
+      <TiraFnInput onTiraFnChange={setTiraFn} case={examples?.[exampleIndex]}></TiraFnInput>
     </>
   )
 }
