@@ -1,21 +1,5 @@
-# bun-react-tailwind-template
+# Tira
 
-To install dependencies:
+Tira is a creative code-golfing playground: write `(t,i,r,a)=>...` and generate polar patterns in real time.
 
-```bash
-bun install
-```
-
-To start a development server:
-
-```bash
-bun dev
-```
-
-To run for production:
-
-```bash
-bun start
-```
-
-This project was created using `bun init` in bun v1.3.13. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Live: https://tira.limx.fun/
